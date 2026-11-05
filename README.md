@@ -3,8 +3,10 @@
 # DefectDojo Community MCP Server
 
 [![CI](https://github.com/systechgd/defectdojo-community-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/systechgd/defectdojo-community-mcp/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/defectdojo-community-mcp.svg)](https://pypi.org/project/defectdojo-community-mcp/)
+[![Python](https://img.shields.io/pypi/pyversions/defectdojo-community-mcp.svg)](https://pypi.org/project/defectdojo-community-mcp/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/systechgd/defectdojo-community-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/systechgd/defectdojo-community-mcp)
 
 A **read-only** [Model Context Protocol](https://modelcontextprotocol.io) server for
 **DefectDojo Community Edition** — so an AI assistant can read your vulnerability
@@ -70,6 +72,16 @@ Requires Python 3.10+.
 ```bash
 pip install defectdojo-community-mcp
 ```
+
+Or as a container:
+
+```bash
+docker pull ghcr.io/systechgd/defectdojo-community-mcp:latest
+```
+
+Listed on the [MCP Registry](https://registry.modelcontextprotocol.io) as
+`io.github.systechgd/defectdojo-community-mcp`, so MCP clients that read the
+registry can install it by name.
 
 Or from source:
 
