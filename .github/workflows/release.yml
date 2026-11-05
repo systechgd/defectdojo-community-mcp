@@ -13,10 +13,15 @@ on:
   workflow_dispatch:
     inputs:
       ref_name:
-        description: "Tag to build the image from (e.g. v0.1.0)"
+        description: "Tag to build from (e.g. v0.1.0)"
         required: true
         default: "v0.1.0"
         type: string
+      publish_pypi:
+        description: "Also publish that tag to PyPI (requires Trusted Publishing to be configured)"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -38,9 +43,10 @@ jobs:
       - run: pip install --upgrade pip build twine
 
       - name: Confirm the tag matches the packaged version
-        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref_name || github.ref_name }}
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
+          TAG="${REF#v}"
           PKG=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
           echo "tag=$TAG packaged=$PKG"
           if [ "$TAG" != "$PKG" ]; then
@@ -59,9 +65,12 @@ jobs:
   pypi:
     name: Publish to PyPI
     needs: build
-    # Tag pushes only: a PyPI release must correspond to a tag, and versions
-    # cannot be reuploaded once published.
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Runs on a tag push, or on an explicit dispatch with publish_pypi checked.
+    # Either way the build job has verified the tag matches pyproject.toml, and
+    # a PyPI version can never be reuploaded once published.
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish_pypi)
     runs-on: ubuntu-latest
 
     environment:
