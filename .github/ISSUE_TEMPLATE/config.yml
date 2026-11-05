@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/systechgd/defectdojo-community-mcp/security/advisories/new
+    about: Please report vulnerabilities privately, not as a public issue.
+  - name: DefectDojo itself
+    url: https://github.com/DefectDojo/django-DefectDojo/issues
+    about: This is an unofficial third-party MCP server. Issues with DefectDojo belong upstream.

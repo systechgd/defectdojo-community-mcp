@@ -1,0 +1,67 @@
+name: Bug report
+description: Something does not work as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not paste API tokens, finding data or instance URLs.** Redact them.
+        For a security vulnerability, use
+        [private reporting](https://github.com/systechgd/defectdojo-community-mcp/security/advisories/new)
+        instead of this form.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Configure with ...
+        2. Call tool ...
+        3. See error ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Output of: defectdojo-community-mcp --version"
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.4"
+    validations:
+      required: true
+
+  - type: input
+    id: mcp-sdk
+    attributes:
+      label: MCP SDK version
+      description: "Output of: pip show mcp | grep Version"
+      placeholder: "2.0.1"
+
+  - type: input
+    id: defectdojo
+    attributes:
+      label: DefectDojo version and edition
+      placeholder: "2.58.4, Community"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Error text or MCP client log. Redact tokens, hostnames and finding data.
+      render: shell
