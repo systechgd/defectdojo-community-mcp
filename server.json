@@ -1,0 +1,66 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.systechgd/defectdojo-community-mcp",
+  "title": "DefectDojo Community",
+  "description": "Read-only MCP server for DefectDojo Community Edition: triage findings, grouped across products.",
+  "version": "0.1.1",
+  "repository": {
+    "url": "https://github.com/systechgd/defectdojo-community-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/systechgd/defectdojo-community-mcp",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "defectdojo-community-mcp",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "DEFECTDOJO_URL",
+          "description": "Base URL of your DefectDojo instance, e.g. https://defectdojo.example.com (no trailing /api/v2).",
+          "isRequired": true
+        },
+        {
+          "name": "DEFECTDOJO_API_KEY",
+          "description": "DefectDojo API v2 token. Use a dedicated read-only user: this server never needs write access.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "DEFECTDOJO_VERIFY_TLS",
+          "description": "Set to false to skip TLS certificate verification. Discouraged; see SECURITY.md.",
+          "isRequired": false
+        },
+        {
+          "name": "DEFECTDOJO_TIMEOUT_SECONDS",
+          "description": "Per-request HTTP timeout in seconds. Defaults to 30.",
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/systechgd/defectdojo-community-mcp:0.1.1",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "DEFECTDOJO_URL",
+          "description": "Base URL of your DefectDojo instance, e.g. https://defectdojo.example.com (no trailing /api/v2).",
+          "isRequired": true
+        },
+        {
+          "name": "DEFECTDOJO_API_KEY",
+          "description": "DefectDojo API v2 token. Use a dedicated read-only user: this server never needs write access.",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

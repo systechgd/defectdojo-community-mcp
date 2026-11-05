@@ -27,6 +27,10 @@ LABEL org.opencontainers.image.title="defectdojo-community-mcp" \
       org.opencontainers.image.source="https://github.com/systechgd/defectdojo-community-mcp" \
       org.opencontainers.image.licenses="Apache-2.0"
 
+# Proves ownership of this image to the MCP Registry. Must match the "name"
+# field in server.json exactly, or publishing is rejected.
+LABEL io.modelcontextprotocol.server.name="io.github.systechgd/defectdojo-community-mcp"
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 

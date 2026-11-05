@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.systechgd/defectdojo-community-mcp -->
+
 # DefectDojo Community MCP Server
 
 [![CI](https://github.com/systechgd/defectdojo-community-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/systechgd/defectdojo-community-mcp/actions/workflows/ci.yml)

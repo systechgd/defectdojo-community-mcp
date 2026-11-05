@@ -155,3 +155,66 @@ jobs:
           UID_IN_IMAGE=$(docker run --rm --entrypoint id "$IMAGE" -u)
           echo "container uid: $UID_IN_IMAGE"
           [ "$UID_IN_IMAGE" != "0" ] || { echo "::error::image runs as root"; exit 1; }
+
+  registry:
+    name: Publish to MCP Registry
+    # Ownership is proven from the published artifacts themselves: the registry
+    # reads the mcp-name marker out of the PyPI description and the
+    # io.modelcontextprotocol.server.name label off the image. Both must exist
+    # before this runs.
+    needs: [pypi, ghcr]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write   # OIDC for `mcp-publisher login github-oidc`. No secret stored.
+
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.7
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Download and verify mcp-publisher
+        run: |
+          set -euo pipefail
+          os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+          arch="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+          archive="mcp-publisher_${os}_${arch}.tar.gz"
+          base="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+
+          curl --fail --location --silent --show-error --output "$archive" "$base/$archive"
+          curl --fail --location --silent --show-error --output "$archive.sigstore.json" "$base/$archive.sigstore.json"
+
+          # Verify the binary's provenance before running it.
+          cosign verify-blob \
+            --bundle "$archive.sigstore.json" \
+            --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "$archive"
+
+          tar xzf "$archive" mcp-publisher
+          rm -f "$archive" "$archive.sigstore.json"
+          ./mcp-publisher --help >/dev/null
+
+      - name: Confirm server.json matches this tag
+        env:
+          REF: ${{ github.ref_name }}
+        run: |
+          TAG="${REF#v}"
+          JSON=$(python -c "import json;print(json.load(open('server.json'))['version'])")
+          echo "tag=$TAG server.json=$JSON"
+          if [ "$TAG" != "$JSON" ]; then
+            echo "::error::server.json version $JSON does not match tag v$TAG."
+            exit 1
+          fi
+
+      - name: Authenticate to the MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish
+        run: ./mcp-publisher publish

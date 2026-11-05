@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "defectdojo-community-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Read-only Model Context Protocol server for DefectDojo Community Edition"
 readme = "README.md"
 license = "Apache-2.0"

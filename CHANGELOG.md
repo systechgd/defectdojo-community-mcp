@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-05
+
+Distribution release. No functional change to the server itself.
+
+### Added
+
+- Published to PyPI as
+  [`defectdojo-community-mcp`](https://pypi.org/project/defectdojo-community-mcp/)
+  and to GHCR as `ghcr.io/systechgd/defectdojo-community-mcp` (linux/amd64 and
+  linux/arm64, with a signed build provenance attestation).
+- Release workflow publishing both on a `v*` tag. PyPI uses Trusted Publishing
+  over OIDC, so no API token is stored in the repository.
+- `server.json` and an MCP Registry publish step, listing both the PyPI package
+  and the container image.
+- Tests guarding metadata drift: the version in `pyproject.toml`,
+  `__init__.py` and `server.json` must agree, the OCI identifier must carry
+  this version, and both registry ownership markers must be present.
+
+### Changed
+
+- README carries an `mcp-name` marker and the image carries an
+  `io.modelcontextprotocol.server.name` label. These are how the MCP Registry
+  proves ownership of the published artifacts.
+
+### Note
+
+0.1.0 shipped to PyPI before the `mcp-name` marker existed, and a PyPI version
+can never be reuploaded — hence this release rather than a correction in place.
+
 ## [0.1.0] - 2026-11-05
 
 First public release.
@@ -67,5 +96,6 @@ First public release.
 - Read-only is enforced structurally: the client class exposes no method
   capable of issuing POST, PUT, PATCH or DELETE, and a test asserts it.
 
-[Unreleased]: https://github.com/systechgd/defectdojo-community-mcp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/systechgd/defectdojo-community-mcp/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/systechgd/defectdojo-community-mcp/releases/tag/v0.1.1
 [0.1.0]: https://github.com/systechgd/defectdojo-community-mcp/releases/tag/v0.1.0
