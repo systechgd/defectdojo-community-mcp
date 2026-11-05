@@ -51,13 +51,23 @@ jobs:
         env:
           REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref_name || github.ref_name }}
         run: |
-          TAG="${REF#v}"
           PKG=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
-          echo "tag=$TAG packaged=$PKG"
-          if [ "$TAG" != "$PKG" ]; then
-            echo "::error::Tag v$TAG does not match version $PKG in pyproject.toml."
-            exit 1
-          fi
+          case "$REF" in
+            v[0-9]*)
+              TAG="${REF#v}"
+              echo "tag=$TAG packaged=$PKG"
+              if [ "$TAG" != "$PKG" ]; then
+                echo "::error::Tag v$TAG does not match version $PKG in pyproject.toml."
+                exit 1
+              fi
+              ;;
+            *)
+              # A dispatch against a branch (e.g. retrying a registry publish).
+              # Nothing is uploaded to PyPI unless publish_pypi is set, and that
+              # path always names a tag.
+              echo "ref '$REF' is not a version tag; building version $PKG as-is."
+              ;;
+          esac
 
       - run: python -m build
       - run: twine check dist/*
