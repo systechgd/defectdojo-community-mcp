@@ -22,6 +22,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish_registry:
+        description: "Also publish server.json to the MCP Registry"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -163,7 +168,10 @@ jobs:
     # io.modelcontextprotocol.server.name label off the image. Both must exist
     # before this runs.
     needs: [pypi, ghcr]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: >-
+      !cancelled() && !failure() &&
+      (startsWith(github.ref, 'refs/tags/v') ||
+       (github.event_name == 'workflow_dispatch' && inputs.publish_registry))
     runs-on: ubuntu-latest
 
     permissions:
@@ -175,6 +183,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref_name || github.ref }}
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v4.1.2
@@ -203,15 +213,22 @@ jobs:
 
       - name: Confirm server.json matches this tag
         env:
-          REF: ${{ github.ref_name }}
+          REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref_name || github.ref_name }}
         run: |
-          TAG="${REF#v}"
           JSON=$(python -c "import json;print(json.load(open('server.json'))['version'])")
-          echo "tag=$TAG server.json=$JSON"
-          if [ "$TAG" != "$JSON" ]; then
-            echo "::error::server.json version $JSON does not match tag v$TAG."
-            exit 1
-          fi
+          case "$REF" in
+            v[0-9]*)
+              TAG="${REF#v}"
+              echo "tag=$TAG server.json=$JSON"
+              if [ "$TAG" != "$JSON" ]; then
+                echo "::error::server.json version $JSON does not match tag v$TAG."
+                exit 1
+              fi
+              ;;
+            *)
+              echo "ref '$REF' is not a version tag; publishing server.json version $JSON as-is."
+              ;;
+          esac
 
       - name: Authenticate to the MCP Registry
         run: ./mcp-publisher login github-oidc
