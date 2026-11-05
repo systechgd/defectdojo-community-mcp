@@ -39,9 +39,7 @@ def normalize_severity(severity: str) -> str:
     for known in SEVERITIES:
         if known.lower() == candidate:
             return known
-    raise ValueError(
-        f"unknown severity {severity!r}; expected one of {', '.join(SEVERITIES)}"
-    )
+    raise ValueError(f"unknown severity {severity!r}; expected one of {', '.join(SEVERITIES)}")
 
 
 def vulnerability_ids(finding: dict) -> list[str]:

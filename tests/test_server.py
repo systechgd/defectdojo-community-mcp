@@ -33,9 +33,7 @@ def test_health_check_reports_product_count(make_client):
 
 def test_list_products(make_client):
     def handler(request: httpx.Request) -> httpx.Response:
-        return json_response(
-            page([{"id": 1, "name": "svc-a", "findings_count": 3}])
-        )
+        return json_response(page([{"id": 1, "name": "svc-a", "findings_count": 3}]))
 
     install(make_client, handler)
     assert server.list_products() == [{"id": 1, "name": "svc-a", "findings": 3}]

@@ -47,8 +47,16 @@ def test_rejects_url_without_scheme():
 
 @pytest.mark.parametrize(
     ("raw", "expected"),
-    [("false", False), ("FALSE", False), ("0", False), ("no", False), ("off", False),
-     ("true", True), ("", True), ("anything-else", True)],
+    [
+        ("false", False),
+        ("FALSE", False),
+        ("0", False),
+        ("no", False),
+        ("off", False),
+        ("true", True),
+        ("", True),
+        ("anything-else", True),
+    ],
 )
 def test_verify_tls_parsing(raw, expected):
     settings = load_settings(

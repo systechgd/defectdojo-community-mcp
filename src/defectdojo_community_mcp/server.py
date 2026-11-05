@@ -90,9 +90,7 @@ def _fetch_findings(
 
     results: list[dict] = []
     for product_id, product_name in targets:
-        raw = client.get_all(
-            "/findings/", {**filters, "test__engagement__product": product_id}
-        )
+        raw = client.get_all("/findings/", {**filters, "test__engagement__product": product_id})
         results.extend(condense(f, product_name, base_url) for f in raw)
     return results
 
@@ -171,9 +169,7 @@ def list_duplicate_findings(product: str | None = None) -> list[dict]:
 
     out: list[dict] = []
     for product_id, product_name in targets:
-        raw = client.get_all(
-            "/findings/", {**filters, "test__engagement__product": product_id}
-        )
+        raw = client.get_all("/findings/", {**filters, "test__engagement__product": product_id})
         out.extend(condense(f, product_name, base_url) for f in raw)
     return out
 

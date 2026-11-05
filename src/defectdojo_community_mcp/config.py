@@ -96,9 +96,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         )
 
     if not url.startswith(("http://", "https://")):
-        raise ConfigError(
-            f"{ENV_URL} must start with http:// or https:// (got {url!r})."
-        )
+        raise ConfigError(f"{ENV_URL} must start with http:// or https:// (got {url!r}).")
 
     raw_timeout = source.get(ENV_TIMEOUT)
     if raw_timeout:

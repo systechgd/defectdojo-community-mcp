@@ -70,12 +70,36 @@ def test_vulnerability_key_falls_back_to_title():
 
 def test_group_by_vulnerability_merges_same_cve_across_products():
     findings = [
-        condense({"id": 1, "title": "a", "severity": "Critical",
-                  "vulnerability_ids": [{"vulnerability_id": "CVE-2024-1"}]}, "svc-a", BASE),
-        condense({"id": 2, "title": "a", "severity": "Critical",
-                  "vulnerability_ids": [{"vulnerability_id": "CVE-2024-1"}]}, "svc-b", BASE),
-        condense({"id": 3, "title": "b", "severity": "Critical",
-                  "vulnerability_ids": [{"vulnerability_id": "CVE-2024-2"}]}, "svc-a", BASE),
+        condense(
+            {
+                "id": 1,
+                "title": "a",
+                "severity": "Critical",
+                "vulnerability_ids": [{"vulnerability_id": "CVE-2024-1"}],
+            },
+            "svc-a",
+            BASE,
+        ),
+        condense(
+            {
+                "id": 2,
+                "title": "a",
+                "severity": "Critical",
+                "vulnerability_ids": [{"vulnerability_id": "CVE-2024-1"}],
+            },
+            "svc-b",
+            BASE,
+        ),
+        condense(
+            {
+                "id": 3,
+                "title": "b",
+                "severity": "Critical",
+                "vulnerability_ids": [{"vulnerability_id": "CVE-2024-2"}],
+            },
+            "svc-a",
+            BASE,
+        ),
     ]
 
     groups = group_by_vulnerability(findings)
@@ -89,8 +113,16 @@ def test_group_by_vulnerability_merges_same_cve_across_products():
 
 def test_group_by_vulnerability_dedupes_products_within_a_group():
     findings = [
-        condense({"id": i, "title": "a", "severity": "Critical",
-                  "vulnerability_ids": [{"vulnerability_id": "CVE-2024-1"}]}, "svc-a", BASE)
+        condense(
+            {
+                "id": i,
+                "title": "a",
+                "severity": "Critical",
+                "vulnerability_ids": [{"vulnerability_id": "CVE-2024-1"}],
+            },
+            "svc-a",
+            BASE,
+        )
         for i in (1, 2, 3)
     ]
     group = group_by_vulnerability(findings)[0]
@@ -102,10 +134,26 @@ def test_group_by_vulnerability_dedupes_products_within_a_group():
 
 def test_group_by_vulnerability_is_deterministic_for_equal_counts():
     findings = [
-        condense({"id": 1, "title": "b", "severity": "Critical",
-                  "vulnerability_ids": [{"vulnerability_id": "CVE-2024-2"}]}, "svc", BASE),
-        condense({"id": 2, "title": "a", "severity": "Critical",
-                  "vulnerability_ids": [{"vulnerability_id": "CVE-2024-1"}]}, "svc", BASE),
+        condense(
+            {
+                "id": 1,
+                "title": "b",
+                "severity": "Critical",
+                "vulnerability_ids": [{"vulnerability_id": "CVE-2024-2"}],
+            },
+            "svc",
+            BASE,
+        ),
+        condense(
+            {
+                "id": 2,
+                "title": "a",
+                "severity": "Critical",
+                "vulnerability_ids": [{"vulnerability_id": "CVE-2024-1"}],
+            },
+            "svc",
+            BASE,
+        ),
     ]
     assert [g["vuln"] for g in group_by_vulnerability(findings)] == ["CVE-2024-1", "CVE-2024-2"]
 
