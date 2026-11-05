@@ -47,3 +47,16 @@ Thumbs.db
 
 # Logs & scratch
 *.log
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+.venv-dev/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ruff_cache/

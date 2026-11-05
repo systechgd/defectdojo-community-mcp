@@ -9,7 +9,7 @@ vulnerability in the server itself, and how to deploy it safely.
 **Please do not open a public issue for a security vulnerability.**
 
 Report it privately through GitHub's
-[private vulnerability reporting](https://github.com/systechgd/defectdojo-mcp/security/advisories/new)
+[private vulnerability reporting](https://github.com/systechgd/defectdojo-community-mcp/security/advisories/new)
 on this repository. If that is unavailable to you, open a public issue containing only
 "security report, please provide a private contact" and nothing further.
 

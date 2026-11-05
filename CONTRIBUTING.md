@@ -21,17 +21,26 @@ performance on large instances, error handling, docs, tests, and packaging.
 ## Getting set up
 
 ```bash
-git clone https://github.com/systechgd/defectdojo-mcp.git
-cd defectdojo-mcp
+git clone https://github.com/systechgd/defectdojo-community-mcp.git
+cd defectdojo-community-mcp
 python -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt   # Windows: .venv\Scripts\python.exe
+.venv/bin/python -m pip install -e ".[dev]"   # Windows: .venv\Scripts\python.exe
 cp .env.example .env    # point it at a DefectDojo instance you own
 ```
 
 Confirm your environment works before changing anything:
 
 ```bash
-.venv/bin/python -c "import json, server; print(json.dumps(server.health_check()))"
+.venv/bin/python -m pytest          # no network or live instance needed
+.venv/bin/defectdojo-community-mcp --check   # against a real instance
+```
+
+Run the linter and the tests before opening a pull request; CI runs both, plus the
+suite on Python 3.10-3.13 and against both MCP SDK generations:
+
+```bash
+.venv/bin/python -m ruff check .
+.venv/bin/python -m pytest
 ```
 
 ## Submitting a change
@@ -52,7 +61,7 @@ Confirm your environment works before changing anything:
 - Keep returned payloads condensed. Instances with tens of thousands of findings are
   normal, and verbose responses exhaust an agent's context.
 - No new runtime dependencies without a good reason; if you add one, declare it in
-  `requirements.txt`.
+  `pyproject.toml`.
 
 ### Things that will get a PR sent back
 

@@ -1,189 +1,213 @@
-# DefectDojo MCP Server
+# DefectDojo Community MCP Server
 
+[![CI](https://github.com/systechgd/defectdojo-community-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/systechgd/defectdojo-community-mcp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![MCP](https://img.shields.io/badge/MCP-read--only-6E56CF.svg)](https://modelcontextprotocol.io)
 
 A **read-only** [Model Context Protocol](https://modelcontextprotocol.io) server for
-[DefectDojo](https://www.defectdojo.org/). It exposes your DefectDojo findings to an
-MCP-capable AI agent so the agent can triage vulnerabilities across every product and
-draft self-contained issues for your tracker — without the developers who fix them
-needing DefectDojo logins.
+**DefectDojo Community Edition** — so an AI assistant can read your vulnerability
+findings, group the same vulnerability across every product, and draft issues for
+whatever tracker you use.
 
-> **Unofficial project.** This is an independent, community-maintained server. It is
-> not affiliated with, endorsed by, or sponsored by DefectDojo or OWASP. See
-> [Trademarks](#trademarks).
+> **Unofficial.** This is an independent open-source project. It is not affiliated
+> with, endorsed by, or supported by DefectDojo Inc. or OWASP. "DefectDojo" is used
+> only to describe what this server connects to.
 
-## Why
+---
 
-DefectDojo is excellent at aggregating scanner output and poor at telling a developer
-what to do on Monday morning. A security pipeline can easily produce hundreds of
-findings in which a dozen dependency bumps resolve most of them.
+## Do you actually need this?
 
-This server gives an agent exactly the read access it needs to do that reduction:
-pull the actionable findings, group them by the underlying vulnerability, and write a
-fix-oriented summary.
+**If you run DefectDojo Pro, you probably don't.** Pro has a built-in MCP server —
+use that instead; it is maintained by the vendor and more capable.
 
-```
-Security scanners ──import──▶ DefectDojo ──API v2──▶ this MCP server ──▶ AI agent
-(Trivy, Dependency-Check,     (findings)             (read-only)            │
- SonarQube, gitleaks, …)                                                   ▼
-                                                        triaged, self-contained
-                                                        issues in your tracker
-```
+| | **DefectDojo Pro (built-in)** | **This project** |
+|---|---|---|
+| Edition | Pro only — [AI features are Pro-only](https://docs.defectdojo.com/metrics_reports/ai/mcp_server_pro/) | Community Edition (works with Pro too) |
+| Requires | DefectDojo v2.51.2+, enabled by a superuser | Any version with API v2 |
+| Runs | Inside your instance, at `/mcp` | On your machine, as a local MCP process |
+| Transport | Streamable HTTP | stdio |
+| Tools | 18 in the read-only `core` toolset | 7 |
+| Writes | None in `core`; available in Pro add-on toolsets (`hierarchy`, `reporting`, `dashboards`, `psirt`) | **Never** — see [Safety model](#safety-model) |
 
-## Safety model
+This project exists because Community Edition has no MCP server at all. It talks to
+the ordinary REST API v2 with a normal API token, so it needs nothing enabled
+server-side and no particular DefectDojo version.
 
-**Read-only by construction.** Every tool in this server issues `GET` requests only —
-there is no code path that performs `POST`, `PUT`, `PATCH` or `DELETE`. It cannot
-create, edit, close, or risk-accept a finding, and it cannot change DefectDojo
-configuration. The worst an agent can do through this server is read.
+> Not to be confused with the unrelated [`defectdojo-mcp`](https://pypi.org/project/defectdojo-mcp/)
+> package on PyPI, which is a different third-party project. This one is
+> `defectdojo-community-mcp`.
 
-Pair it with a DefectDojo token belonging to a **read-only user** for defence in
-depth. See [SECURITY.md](SECURITY.md).
+---
 
-## Requirements
+## Tools
 
-- Python 3.10 or newer
-- A DefectDojo instance (community edition is fine) reachable over HTTPS
-- A DefectDojo **API v2** token
+| Tool | What it does |
+|---|---|
+| `health_check` | Verify connectivity and auth; returns the instance URL and product count |
+| `list_products` | Every product, with its findings count |
+| `list_critical_findings` | Actionable criticals, optionally scoped to one product |
+| `list_findings_by_severity` | The same, for any severity |
+| `group_critical_by_vuln` | **The useful one.** Groups criticals across all products by CVE (else CWE+title), widest blast radius first |
+| `list_duplicate_findings` | Findings DefectDojo marked as duplicates |
+| `get_finding` | Full detail for one finding |
+
+"Actionable" means `active` and not false-positive, duplicate, risk-accepted,
+out-of-scope or mitigated — the set actually worth someone's time.
+
+`group_critical_by_vuln` is the reason this exists. A monorepo-shaped scanner
+setup reports the same upstream CVE once per product; this collapses them into one
+group per vulnerability listing every affected product, which maps cleanly onto one
+tracker issue.
+
+---
 
 ## Install
 
-```bash
-git clone https://github.com/systechgd/defectdojo-mcp.git
-cd defectdojo-mcp
+Requires Python 3.10+.
 
-python -m venv .venv
-# Linux / macOS
-.venv/bin/python -m pip install -r requirements.txt
-# Windows
-.venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+pip install defectdojo-community-mcp
 ```
+
+Or from source:
+
+```bash
+git clone https://github.com/systechgd/defectdojo-community-mcp.git
+cd defectdojo-community-mcp
+pip install -e .
+```
+
+---
 
 ## Configure
 
-The server reads its configuration from the environment. Create a `.env` beside
-`server.py` so the token never has to sit in your MCP client config:
+Two environment variables are required.
 
-```bash
-cp .env.example .env
-```
-
-```ini
-DEFECTDOJO_URL=https://defectdojo.example.com
-DEFECTDOJO_API_KEY=your-defectdojo-api-v2-token
-# DEFECTDOJO_VERIFY_TLS=false   # only for self-signed certs -- see SECURITY.md
-```
-
-| Variable | Required | Default | Description |
+| Variable | Required | Default | Notes |
 |---|---|---|---|
-| `DEFECTDOJO_URL` | yes | — | Base URL of your DefectDojo instance |
-| `DEFECTDOJO_API_KEY` | yes | — | API v2 token (DefectDojo → user menu → **API v2 Key**) |
-| `DEFECTDOJO_VERIFY_TLS` | no | `true` | Set to `false` to skip TLS verification. **Discouraged.** |
+| `DEFECTDOJO_URL` | yes | — | Base URL, e.g. `https://defectdojo.example.com`. No trailing `/api/v2`. |
+| `DEFECTDOJO_API_KEY` | yes | — | API v2 token. See below for scoping it down. |
+| `DEFECTDOJO_VERIFY_TLS` | no | `true` | `false` disables certificate verification. See [SECURITY.md](SECURITY.md). |
+| `DEFECTDOJO_TIMEOUT_SECONDS` | no | `30` | Per-request HTTP timeout. |
 
-`.env` is git-ignored. Never commit it.
+Get a token from **DefectDojo → your user → API v2 Key**.
 
-### Verify before wiring up an agent
+**Create a dedicated read-only user for it.** The token inherits that user's
+permissions, and nothing in this server needs write access. If the token leaks, a
+read-only one cannot be used to alter your findings.
+
+Check it works before wiring up a client:
 
 ```bash
-.venv/bin/python -c "import json, server; print(json.dumps(server.health_check()))"
-# => {"ok": true, "url": "https://...", "product_count": 23}
+defectdojo-community-mcp --check
+# ok: https://defectdojo.example.com reachable, 23 product(s) visible
 ```
 
-If this fails, the agent will fail too — fix it here first, where the error is readable.
+---
 
-## Register with an MCP client
+## Connect an MCP client
 
-Add the server to your client's `mcpServers` configuration using **absolute paths**:
+### Claude Code
+
+```bash
+claude mcp add defectdojo \
+  --env DEFECTDOJO_URL=https://defectdojo.example.com \
+  --env DEFECTDOJO_API_KEY=your-token \
+  -- defectdojo-community-mcp
+```
+
+### Claude Desktop / generic JSON config
 
 ```json
 {
   "mcpServers": {
     "defectdojo": {
-      "command": "/absolute/path/to/defectdojo-mcp/.venv/bin/python",
-      "args": ["/absolute/path/to/defectdojo-mcp/server.py"]
+      "command": "defectdojo-community-mcp",
+      "env": {
+        "DEFECTDOJO_URL": "https://defectdojo.example.com",
+        "DEFECTDOJO_API_KEY": "your-token"
+      }
     }
   }
 }
 ```
 
-On Windows, use `.venv\\Scripts\\python.exe`. Common config locations:
+If the console script is not on your `PATH`, use
+`"command": "python", "args": ["-m", "defectdojo_community_mcp"]`.
 
-| Client | Path |
-|---|---|
-| Claude Code (global) | `~/.claude.json` |
-| Claude Code (project) | `.mcp.json` in the project root |
-| Claude Desktop | `claude_desktop_config.json` |
+### Docker
 
-No token belongs in this file — it is loaded from `.env`. Restart the client afterwards.
+The server speaks MCP over stdio, so run it attached (`-i`), not detached:
 
-## Tools
+```json
+{
+  "mcpServers": {
+    "defectdojo": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-e", "DEFECTDOJO_URL",
+        "-e", "DEFECTDOJO_API_KEY",
+        "ghcr.io/systechgd/defectdojo-community-mcp:latest"
+      ]
+    }
+  }
+}
+```
 
-| Tool | Description |
-|---|---|
-| `health_check()` | Verify connectivity and auth; returns the reachable product count |
-| `list_products()` | All products visible to the token |
-| `list_critical_findings(product?, include_duplicates?)` | Actionable critical findings |
-| `list_findings_by_severity(severity, product?, include_duplicates?)` | Any severity: `Critical`, `High`, `Medium`, `Low`, `Info` |
-| `group_critical_by_vuln()` | One entry per unique vulnerability (CVE, else CWE+title) with every affected product |
-| `list_duplicate_findings(product?)` | Findings DefectDojo has flagged as duplicates |
-| `get_finding(finding_id)` | Full detail: description, mitigation, references, CWE/CVE, location |
+---
 
-**"Actionable"** means `active` and **not** false-positive, risk-accepted,
-out-of-scope, mitigated, or duplicate — i.e. findings a human still owes work on.
-Results are condensed to the fields that matter for triage, to keep agent context
-small on large instances.
+## Example
 
-### A note on products
+> Group every critical finding by vulnerability and show me the ones affecting
+> more than three services.
 
-A *product* is whatever unit your scanners import under. Many CI pipelines import one
-product per source repository, so product names often match repo names — but this
-server makes no assumption about that and simply reports what your instance contains.
+The assistant calls `group_critical_by_vuln` and gets back, per vulnerability, the
+CVE, title, affected product list and a direct DefectDojo URL per finding — enough
+to write one issue covering all of them, instead of twelve near-identical ones.
 
-## Usage
+---
 
-Fleet-wide view of what actually needs fixing:
+## Safety model
 
-> Run `health_check`, then `group_critical_by_vuln` — show me the unique critical
-> vulnerabilities and which products each one affects.
+**Read-only is a design invariant, not a default.**
 
-Per-product triage into a single tracker issue:
+- No tool issues a `POST`, `PUT`, `PATCH` or `DELETE`.
+- The HTTP client class exposes no method capable of doing so, so a mutating tool
+  cannot be added by accident — only by deliberately changing that class.
+- A test asserts that every request made by every tool is a `GET`.
 
-> Pull every severity for `payments-api` and draft a self-contained security issue:
-> findings grouped by severity, plus a "how to fix" section grouped by dependency.
+Adding write support would be a breaking change to this guarantee. If it ever
+happens it will be a **separate server**, so operators can keep granting read
+without granting write.
 
-Confirm a remediation landed:
+Findings data is attacker-influenced — scanner output can contain text from
+dependency metadata, file paths and commit messages. Treat tool results as data,
+never as instructions. See [SECURITY.md](SECURITY.md) for the full threat model and
+how to report a vulnerability.
 
-> Check `payments-api` — are Critical and High cleared now?
+---
 
-### A workflow that works well
+## Development
 
-1. **One issue per product**, self-contained: embed each finding's CVE (linked to
-   NVD), the affected component and its fix version, and the CWE. Group the fix
-   guidance *by dependency* — a single framework or BOM bump frequently clears most
-   of the list. Developers then never need DefectDojo access.
-2. Developer applies the bumps, pipeline re-scans and re-imports to DefectDojo.
-3. Ask the agent to re-check through this server; close the issue when Critical and
-   High are clear.
+```bash
+git clone https://github.com/systechgd/defectdojo-community-mcp.git
+cd defectdojo-community-mcp
+python -m venv .venv && . .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
 
-## Contributing
+pytest          # 57 tests, no network or live instance needed
+ruff check .
+```
 
-Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and note
-the project's hard constraint: **this server stays read-only.** Pull requests adding
-write operations to DefectDojo will not be merged — that belongs in a separate,
-clearly-named server so operators can grant read access without granting write.
+The test suite runs entirely against `httpx.MockTransport`. CI additionally runs the
+suite on Python 3.10–3.13 and against both MCP SDK generations (`mcp<2`, which has
+`FastMCP`, and `mcp>=2`, which renamed it to `MCPServer`).
 
-To report a security issue, see [SECURITY.md](SECURITY.md) — please do not open a
-public issue.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+---
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) and
-[NOTICE](NOTICE).
-
-## Trademarks
-
-"DefectDojo" and "OWASP" are trademarks of their respective owners. This project is
-not affiliated with, endorsed by, or sponsored by either. Those names are used solely
-to describe interoperability with that software, as permitted by nominative fair use.
+[Apache-2.0](LICENSE). See [NOTICE](NOTICE).
