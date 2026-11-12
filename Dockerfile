@@ -8,7 +8,7 @@
 #     -e DEFECTDOJO_API_KEY=... \
 #     ghcr.io/systechgd/defectdojo-community-mcp:latest
 
-FROM python:3.12-slim@sha256:e695ab189fa2d082b1c61c69a6b888a5adeca61ceeccad107b1ed2a125721a9e AS builder
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928 AS builder
 
 WORKDIR /build
 
@@ -20,7 +20,7 @@ COPY src ./src
 
 RUN pip install --no-cache-dir --prefix=/install .
 
-FROM python:3.12-slim@sha256:e695ab189fa2d082b1c61c69a6b888a5adeca61ceeccad107b1ed2a125721a9e
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
 
 LABEL org.opencontainers.image.title="defectdojo-community-mcp" \
       org.opencontainers.image.description="Read-only MCP server for DefectDojo Community Edition" \
